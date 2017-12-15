@@ -335,7 +335,7 @@ Tx 48a404c7 with
     ]
 ```
 
-## Address Extraction
+## Use Case 1: Address Extraction
 
 This is another real-life example of transaction, now we obtain recipient address.
 
@@ -458,3 +458,26 @@ AL91N9VXRTCypFouG2KjJvJuvKmUC4p3XcpHnYETWRG5HJVpi2ixeN1nG5EWtbJCH71YjzhqHKcsmmPY
 ```
 
 This is an address in its final form.
+
+## Use Case 2: Transaction Fee
+
+Transaction fees in Cardano SL are described [here](https://cardanodocs.com/cardano/transaction-fees/).
+
+Let's consider the transaction from the use case 1:
+
+```
+Tx bd1b9526 with
+    inputs [
+        TxInUtxo e981442c #17306
+    ],
+    outputs: [
+        TxOut 15597252095955044 coin(s) -> AL91N9VXRTCypFouG2KjJvJuvKmUC4p3XcpHnYETWRG5HJVpi2ixeN1nG5EWtbJCH71YjzhqHKcsmmPYGRjy8nHDe2i17BEf9hTqDDLmcFVbHxx1GW9
+    ]
+```
+
+Transaction fee is a difference between `Vi` and `Vo`, where `Vi` is a value of all
+inputs and `Vo` is a value of all outputs. There is a single output, so we already have
+`Vo`: 15597252095955044 Lovelaces. But we don't have `Vi`, because this value is defined
+in previous transaction's output (in this example it is an output `#17306` of the
+transaction `e981442c`). So it is impossible to extract the fee from transaction `bd1b9526`
+without knowledge about (previous) transaction `e981442c`.
