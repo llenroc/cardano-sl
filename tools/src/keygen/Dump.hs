@@ -17,7 +17,8 @@ import           System.FilePath ((</>))
 import           System.Wlog (WithLogger, logInfo)
 
 import           Pos.Core.Configuration (HasGeneratedSecrets, generatedSecrets)
-import           Pos.Core.Genesis (GeneratedSecrets (..), RichSecrets (..))
+import           Pos.Core.Genesis (GeneratedSecrets (..), PoorSecret (..), RichSecrets (..),
+                                   poorSecretToEncKey)
 import           Pos.Crypto (EncryptedSecretKey, SecretKey)
 import           Pos.Util.UserSecret (UserSecret, initializeUserSecret, mkGenesisWalletUserSecret,
                                       takeUserSecret, usKeys, usPrimKey, usVss, usWallet,
@@ -78,7 +79,7 @@ dumpKeyfiles
     => (FilePath, FilePath) -- directory and key-file pattern
     -> [SecretKey]
     -> [RichSecrets]
-    -> [EncryptedSecretKey]
+    -> [PoorSecret]
     -> m ()
 dumpKeyfiles (dir, pat) dlgIssuers richs poors = do
     let keysDir = dir </> "generated-keys"
@@ -99,7 +100,7 @@ dumpKeyfiles (dir, pat) dlgIssuers richs poors = do
         dumpDlgIssuerSecret (dlgIssuersDir </> patternize i) sk
     forM_ (enumerate richs) $ \(i, richSecrets) ->
         dumpRichSecrets (richDir </> patternize i) richSecrets
-    forM_ (enumerate poors) $ \(i, hdwSk) ->
+    forM_ (enumerate . map poorSecretToEncKey $ poors) $ \(i, hdwSk) ->
         dumpPoorSecret (poorDir </> patternize i) hdwSk
 
     logInfo $ show totalSecrets <> " keyfiles are generated"
