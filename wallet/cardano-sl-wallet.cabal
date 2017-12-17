@@ -95,6 +95,7 @@ library
                       , node-sketch
                       , network-transport-tcp
                       , optparse-applicative
+                      , parallel
                       , parsec
                       , random
                       , reflection

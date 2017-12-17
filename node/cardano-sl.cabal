@@ -394,6 +394,7 @@ library
                       , node-sketch >= 0.1.0.0
                       , optparse-applicative
                       , parsec
+                      , parallel
                       , plutus-prototype
                       , pvss
                       , quickcheck-instances

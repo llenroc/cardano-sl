@@ -271,7 +271,7 @@ getAccountWAddresses mode (NeedSorting needSort) accId =
         cAddresses <- preview (wsAccountInfos . ix accId . which)
         -- here `cAddresses` has type `Maybe CAddresses`
         pure $
-            (map adiCWAddressMeta . sorting . map snd . HM.toList)
+            (map adiCWAddressMeta . sorting . toList)
             <$> cAddresses
 
 
