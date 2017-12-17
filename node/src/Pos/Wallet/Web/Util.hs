@@ -14,7 +14,6 @@ module Pos.Wallet.Web.Util
 
 import           Universum
 
-import           Control.Parallel           (par)
 import qualified Data.Set                   as S
 import           Formatting                 (build, sformat, (%))
 
@@ -61,9 +60,7 @@ getWalletAddrsSet
     :: (WebWalletModeDB ctx m, MonadThrow m)
     => AddressLookupMode -> CId Wal -> m (Set (CId Addr))
 getWalletAddrsSet lookupMode cWalId = do
-    res <- S.fromList . map cwamId <$> getWalletAddrMetas lookupMode cWalId
-    -- this conversion to set is suddenly very slow
-    res `par` return res
+    S.fromList . map cwamId <$> getWalletAddrMetas lookupMode cWalId
 
 decodeCTypeOrFail :: (MonadThrow m, FromCType c) => c -> m (OriginType c)
 decodeCTypeOrFail = either (throwM . DecodeError) pure . decodeCType

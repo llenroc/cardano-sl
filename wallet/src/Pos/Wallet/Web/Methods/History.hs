@@ -13,7 +13,6 @@ module Pos.Wallet.Web.Methods.History
 import           Universum
 
 import           Control.Exception          (throw)
-import           Control.Parallel           (par)
 import qualified Data.Map.Strict            as Map
 import qualified Data.Set                   as S
 import           Data.Time.Clock.POSIX      (POSIXTime, getPOSIXTime)
@@ -81,7 +80,6 @@ getHistory cWalId accIds mAddrId = do
     -- FIXME: searching when only AddrId is provided is not supported yet.
     accAddrs <- S.fromList . map cwamId <$>
                 concatMapM (getAccountAddrsOrThrow Ever (NeedSorting False)) accIds
-    let !_ = accAddrs `par` ()  -- conversion to set may be somewhat expensive
     allAccIds <- getWalletAccountIds cWalId
 
     let filterFn :: Map TxId (CTx, POSIXTime) -> Map TxId (CTx, POSIXTime)
