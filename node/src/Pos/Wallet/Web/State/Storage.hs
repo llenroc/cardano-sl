@@ -11,6 +11,7 @@ module Pos.Wallet.Web.State.Storage
        , AddressLookupMode (..)
        , CustomAddressType (..)
        , NeedSorting (..)
+       , CurrentAndRemoved (..)
        , WalletBalances
        , WalBalancesAndUtxo
        , WalletTip (..)
@@ -25,6 +26,7 @@ module Pos.Wallet.Web.State.Storage
        , getAccountIds
        , getAccountMetas
        , getAccountMeta
+       , getAccountAddrMaps
        , getWalletMetas
        , getWalletMeta
        , getWalletMetaIncludeUnready
@@ -214,6 +216,11 @@ customAddressL ChangeAddr = wsChangeAddresses
 -- | Whether need to sort list.
 newtype NeedSorting = NeedSorting Bool
 
+data CurrentAndRemoved a = CurrentAndRemoved
+    { getCurrent :: a
+    , getRemoved :: a
+    }
+
 getProfile :: Query CProfile
 getProfile = view wsProfile
 
@@ -231,6 +238,14 @@ getAccountMetas = map (view aiMeta) . toList <$> view wsAccountInfos
 
 getAccountMeta :: AccountId -> Query (Maybe CAccountMeta)
 getAccountMeta accId = preview (wsAccountInfos . ix accId . aiMeta)
+
+getAccountAddrMaps :: AccountId -> Query (CurrentAndRemoved CAddresses)
+getAccountAddrMaps accId = do
+    getCurrent <- getMap aiAddresses
+    getRemoved <- getMap aiRemovedAddresses
+    return CurrentAndRemoved{..}
+  where
+    getMap aiLens = fmap (fromMaybe mempty) $ preview $ wsAccountInfos . ix accId . aiLens
 
 getWalletMetas :: Query [CWalletMeta]
 getWalletMetas = toList . fmap _wiMeta . HM.filter _wiIsReady <$> view wsWalletInfos
@@ -546,6 +561,7 @@ deriveSafeCopySimple 0 'base ''CUpdateInfo
 deriveSafeCopySimple 0 'base ''AddressLookupMode
 deriveSafeCopySimple 0 'base ''CustomAddressType
 deriveSafeCopySimple 0 'base ''NeedSorting
+deriveSafeCopySimple 0 'base ''CurrentAndRemoved
 deriveSafeCopySimple 0 'base ''TxAux
 deriveSafeCopySimple 0 'base ''PtxCondition
 deriveSafeCopySimple 0 'base ''PtxSubmitTiming

@@ -7,13 +7,14 @@ module Pos.Wallet.Web.Util
     , getAccountAddrsOrThrow
     , getWalletAddrMetas
     , getWalletAddrs
-    , getWalletAddrsSet
+    , getWalletAddrsDetector
     , decodeCTypeOrFail
     , getWalletAssuredDepth
     ) where
 
 import           Universum
 
+import qualified Data.HashMap.Strict        as HM
 import qualified Data.Set                   as S
 import           Formatting                 (build, sformat, (%))
 
@@ -27,8 +28,9 @@ import           Pos.Wallet.Web.ClientTypes (AccountId (..), Addr, CId,
 
 
 import           Pos.Wallet.Web.Error       (WalletError (..))
-import           Pos.Wallet.Web.State       (AddressLookupMode, NeedSorting (..),
-                                             WebWalletModeDB, getAccountIds,
+import           Pos.Wallet.Web.State       (AddressLookupMode, CurrentAndRemoved (..),
+                                             NeedSorting (..), WebWalletModeDB,
+                                             getAccountAddrMaps, getAccountIds,
                                              getAccountWAddresses, getWalletMeta)
 
 getWalletAccountIds :: WebWalletModeDB ctx m => CId Wal -> m [AccountId]
@@ -56,11 +58,22 @@ getWalletAddrs
     => AddressLookupMode -> CId Wal -> m [CId Addr]
 getWalletAddrs mode wid = cwamId <<$>> getWalletAddrMetas mode wid
 
-getWalletAddrsSet
+getWalletAddrsDetector
     :: (WebWalletModeDB ctx m, MonadThrow m)
-    => AddressLookupMode -> CId Wal -> m (Set (CId Addr))
-getWalletAddrsSet lookupMode cWalId = do
-    S.fromList . map cwamId <$> getWalletAddrMetas lookupMode cWalId
+    => AddressLookupMode -> CId Wal -> m (CId Addr -> Bool)
+getWalletAddrsDetector lookupMode cWalId = do
+    accIds <- getWalletAccountIds cWalId
+    case accIds of
+        [accId] -> do
+            -- can avoid conversion to Set
+            addrMaps <- getAccountAddrMaps accId
+            return $ \addr ->
+                any (HM.member addr) [getCurrent addrMaps, getRemoved addrMaps]
+
+        _ -> do
+            addrMetas <- concatMapM (getAccountAddrsOrThrow lookupMode (NeedSorting False)) accIds
+            let addrSet = S.fromList $ map cwamId addrMetas
+            return $ flip S.member addrSet
 
 decodeCTypeOrFail :: (MonadThrow m, FromCType c) => c -> m (OriginType c)
 decodeCTypeOrFail = either (throwM . DecodeError) pure . decodeCType

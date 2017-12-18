@@ -56,7 +56,8 @@ import           Pos.Wallet.Web.State             (AddressLookupMode (Ever, Exis
                                                    NeedSorting (..))
 import           Pos.Wallet.Web.Util              (decodeCTypeOrFail,
                                                    getAccountAddrsOrThrow,
-                                                   getWalletAccountIds, getWalletAddrsSet)
+                                                   getWalletAccountIds,
+                                                   getWalletAddrsDetector)
 
 newPayment
     :: MonadWalletWebMode m
@@ -156,7 +157,6 @@ sendMoney SendActions{..} passphrase moneySource dstDistr = do
 
     logDebug "sendMoney: start retrieving addrs"
 
-    srcWalletAddrs <- getWalletAddrsSet Ever srcWallet
     addrMetas' <- getMoneySourceAddresses moneySource
     addrMetas <- nonEmpty addrMetas' `whenNothing`
         throwM (RequestError "Given money source has no addresses!")
@@ -207,7 +207,8 @@ sendMoney SendActions{..} passphrase moneySource dstDistr = do
 
     addHistoryTx srcWallet th
     diff <- getCurChainDifficulty
-    fst <$> constructCTx srcWallet srcWalletAddrs diff th
+    srcWalletAddrsDetector <- getWalletAddrsDetector Ever srcWallet
+    fst <$> constructCTx srcWallet srcWalletAddrsDetector diff th
   where
      -- TODO eliminate copy-paste
      listF separator formatter =
